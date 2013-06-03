@@ -40,28 +40,26 @@ void setup()
   threshold = 80;
   currentFrame = 0; 
 
-  if ( getDirectory( "/data" ) )
-  {
-    println( "HERE" );
-  } 
+  getDirectory( "/data" );
 
   counter = 1;
 }
 
 
 
-boolean getDirectory( String s )
+void getDirectory( String s )
 {
   try
   {
-    dir = new File( s );
+    path = s;
+    dir = new File( path );
     files = dir.list();
-    return true;
   } 
   catch( Exception e )
   {
     println( e );
-    return false;
+    print( "Failed to load directory. Please verify the path string." );
+    println( "Path = " + path ); 
   }
 }
 
