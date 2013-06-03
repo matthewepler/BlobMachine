@@ -8,6 +8,9 @@
  *NOTE: to be updated upon release of OpenCVPro by Greg Borenstein: https://github.com/atduskgreg/OpenCVPro
  **NTS: Processing folder should be set to old folder, located in Dropbox dir.
  
+ // TO ADD
+ -- button to launch OS directory window
+ 
  */
 
 import hypermedia.video.*;
@@ -23,44 +26,61 @@ boolean find = true;
 
 // FILE VARIABLES
 File dir;
-String path = "/Users/matthewepler/Documents/Processing/PixelSorting/SortImageByNpx_iterate/data";
+String path;
 String[] files;
 int counter;
 
 // GUI VARIABLES
-int currentFrame;
+int currentFrame = 1;
+int horizMargin = 25;
+int vertMargin  = 0;
+int panelWidth  = 300;
+int windowLeft;
+int windowWidth;
+int windowHeight;
+int smallText   = 16;
+int largeText   = 16;
+color clearText = color( 225 );
+color valueText = color( 20, 214, 255 );
+PFont guiFont;
 
 
 void setup() 
 {  
-  size( 1000, 800 );
+  size( 1200, 825);
   opencv = new OpenCV( this );
-  controlP5 = new ControlP5( this );
+  smooth();
+  
+  getDirectory( "/Users/matthewepler/Dropbox/Processing/blobs_gui_cv01/data" );
+  
+  windowLeft  = panelWidth + (horizMargin*2);
+  windowWidth = width - windowLeft - horizMargin;
+  windowHeight= height - (horizMargin*2);
+  
+  guiFont = loadFont( "AndaleMono-48.vlw" );
+  textFont( guiFont );
+  initGui();
 
   threshold = 80;
   currentFrame = 0; 
-
-  getDirectory( "/data" );
-
   counter = 1;
 }
 
 
-
-void getDirectory( String s )
+void draw()
 {
-  try
+  background( 0 ); 
+  
+  String currentFile = files[ currentFrame ];
+  if( !currentFile.contains( "Store" ) )
   {
-    path = s;
-    dir = new File( path );
-    files = dir.list();
-  } 
-  catch( Exception e )
-  {
-    println( e );
-    print( "Failed to load directory. Please verify the path string." );
-    println( "Path = " + path ); 
+    PImage currentImage = loadImage( files[ currentFrame ] );
+    currentImage.resize( windowWidth, 0 );
+    image( currentImage, windowLeft, horizMargin );
   }
+  
+  showGuiOutlines();
+  drawText();
 }
 
 
@@ -69,7 +89,7 @@ void processAllImageFilesInDir()
   for (File child : dir.listFiles()) 
   {
     String filename = child.getName();
-    if ( !filename.contains("Store") )
+    if ( !filename.contains("Store") && !filename.contains("vlw") )
     {
       opencv.loadImage( filename );
       opencv.absDiff();
@@ -119,6 +139,86 @@ void processAllImageFilesInDir()
     }
   }
 }
+
+
+void getDirectory( String s )
+{
+  path = s;
+  dir = new File( path );
+  
+  if( dir.isDirectory() )
+  {
+    files = dir.list();
+    String success = "Directory \'" + dir.getName() + "\' loaded successfully.";
+    println( success );
+  } 
+  else
+  {
+    String fail = "Failed to load directory. Please verify the path string.";
+    fail += "\n";
+    fail += "Path = " + path;
+    println( fail ); 
+  }
+}
+
+void initGui()
+{
+  controlP5 = new ControlP5( this );
+  controlP5.setControlFont( guiFont, 14 );
+  CColor c =  new CColor();
+  c.setBackground( 155 ); 
+  c.setForeground( 0 );
+  c.setCaptionLabel( 20 ); 
+  c.setValueLabel( 0 );
+  c.setAlpha( 200 );
+  c.setActive( color( 155, 0, 0 ) );
+
+  controlP5.Button setPath = controlP5.addButton( "PATH", 0, horizMargin, vertMargin, 105, 20 );
+  setPath.setCaptionLabel( " <SET PATH>" );
+  setPath.captionLabel().style().marginTop = vertMargin - 2;
+  setPath.setColor( c );
+  
+  controlP5.Slider scrubber = controlP5.addSlider( "scrubber", 0, files.length, 0, windowLeft, windowHeight, windowWidth, 15 );
+  scrubber.setNumberOfTickMarks( files.length );
+  scrubber.snapToTickMarks( true );
+  scrubber.setSliderMode(Slider.FLEXIBLE);
+  int currFileNumber = int( scrubber.valueLabel().toString() );
+  scrubber.setValueLabel( "File " + currFileNumber + " of " + files.length );
+  scrubber.setColor( c );
+}
+
+void scrubber( int value )
+{
+  currentFrame = value;
+  ((Slider)controlP5.controller("scrubber")).setValueLabel( "File " + value + " of " + files.length ); 
+}
+
+void setPath()
+{
+  // open a window for user to select path
+  println( "setPath() temp empty" );  
+}
+
+void drawText()
+{
+  textSize( largeText );
+  fill( valueText );
+  text( path, horizMargin + 120, vertMargin + largeText ); 
+}
+
+
+void showGuiOutlines()
+{
+  // LEFT PANEL
+  noFill();
+  stroke( 255, 0, 0 );
+  rect( horizMargin, vertMargin, panelWidth, height - (vertMargin*4) );
+  
+  // WINDOW
+  stroke( 0, 0, 255 );
+  rect( windowLeft, horizMargin, windowWidth, windowHeight );
+}
+
 
 public void stop() {
   opencv.stop();
