@@ -13,6 +13,7 @@
  
  */
 
+import processing.opengl.*;
 import hypermedia.video.*;
 import java.awt.*;
 import controlP5.*;
@@ -45,6 +46,7 @@ color clearText = color( 225 );
 color valueText = color( 20, 214, 255 );
 PFont guiFont;
 int imageX, imageY, imageSize;
+boolean detectBlobs;
 
 
 void setup() 
@@ -52,7 +54,7 @@ void setup()
   size( 1200, 925);
   opencv = new OpenCV( this );
   
-  getDirectory( "/Users/matthewepler/Dropbox/Processing/blobs_gui_cv01/data" );
+  getDirectory( "/Users/matthewepler/Dropbox/Processing_1_5/blobs_gui_cv01/data" );
   
   windowLeft  = panelWidth + (horizMargin*2);
   windowWidth = width - windowLeft - horizMargin;
@@ -76,15 +78,22 @@ void draw()
 {
   background( 90 ); 
   
-  String currentFile = files[ currentFrame ];
-  if( !currentFile.contains( "Store" ) )
+  if( detectBlobs )
   {
+    // detect blobs on the current image and display
+    String currentFile = files[ currentFrame ];
+    PImage currentImage = loadImage( files[ currentFrame ] );
+    currentImage.resize( imageSize, 0 );
+    image( currentImage, imageX, imageY );
+    detectBlobsSingleImage( currentFile );
+  } else {
+    // just show the image by itself
+    String currentFile = files[ currentFrame ];
     PImage currentImage = loadImage( files[ currentFrame ] );
     currentImage.resize( imageSize, 0 );
     image( currentImage, imageX, imageY );
   }
   
-  //showGuiOutlines();
   drawText();
 }
 
@@ -96,53 +105,66 @@ void processAllImageFilesInDir()
     String filename = child.getName();
     if ( !filename.contains("Store") && !filename.contains("vlw") )
     {
-      opencv.loadImage( filename );
-      opencv.absDiff();
-      opencv.threshold(threshold);
-      Blob[] blobs = opencv.blobs( 100, width*height/3, 20, true ); // adjust first two values for min/max size of blobs
-      background( 0 );
-      for ( int i=0; i<blobs.length; i++ ) {
-
-        Rectangle bounding_rect  = blobs[i].rectangle;
-        float area = blobs[i].area;
-        float circumference = blobs[i].length;
-        Point centroid = blobs[i].centroid;
-        Point[] points = blobs[i].points;
-
-        // rectangle
-        noFill();
-        stroke( blobs[i].isHole ? 128 : 64 );
-        rect( bounding_rect.x, bounding_rect.y, bounding_rect.width, bounding_rect.height );
-
-
-        // centroid
-        stroke(0, 0, 255);
-        line( centroid.x-5, centroid.y, centroid.x+5, centroid.y );
-        line( centroid.x, centroid.y-5, centroid.x, centroid.y+5 );
-        noStroke();
-        fill(0, 0, 255);
-        text( area, centroid.x+5, centroid.y+5 );
-
-
-        fill(255, 0, 255, 64);
-        stroke(255, 0, 255);
-        if ( points.length>0 ) {
-          beginShape();
-          for ( int j=0; j<points.length; j++ ) {
-            vertex( points[j].x, points[j].y );
-          }
-          endShape(CLOSE);
-        }
-
-        noStroke();
-        fill(255, 0, 255);
-        text( circumference, centroid.x+5, centroid.y+15 );
-      }
+      detectBlobsSingleImage( filename );
       save( "output/" + filename );
-      println( counter + " of " + files.length );
+      println( counter + " of " + files.length ); 
       counter++;
     }
   }
+}
+
+
+void detectBlobsSingleImage( String filename )
+{
+  opencv.loadImage( filename );
+  PGraphics blobFrame = createGraphics( opencv.width, opencv.height, P2D );
+  opencv.absDiff();
+  opencv.threshold(threshold);
+  Blob[] blobs = opencv.blobs( 100, width*height/3, 20, true ); // adjust first two values for min/max size of blobs
+
+  blobFrame.beginDraw();
+  blobFrame.background( 0, 0 );
+  
+  for ( int i=0; i<blobs.length; i++ ) {
+
+    Rectangle bounding_rect  = blobs[i].rectangle;
+    float area = blobs[i].area;
+    float circumference = blobs[i].length;
+    Point centroid = blobs[i].centroid;
+    Point[] points = blobs[i].points;
+
+    // rectangle
+    blobFrame.noFill();
+    blobFrame.stroke( blobs[i].isHole ? 128 : 64 );
+    blobFrame.rect( bounding_rect.x, bounding_rect.y, bounding_rect.width, bounding_rect.height );
+
+
+    // centroid
+    blobFrame.stroke(0, 0, 255);
+    blobFrame.line( centroid.x-5, centroid.y, centroid.x+5, centroid.y );
+    blobFrame.line( centroid.x, centroid.y-5, centroid.x, centroid.y+5 );
+    blobFrame.noStroke();
+    blobFrame.fill(0, 0, 255);
+    blobFrame.text( area, centroid.x+5, centroid.y+5 );
+
+
+    blobFrame.fill(255, 0, 255, 64);
+    blobFrame.stroke(255, 0, 255);
+    if ( points.length>0 ) {
+      blobFrame.beginShape();
+      for ( int j=0; j<points.length; j++ ) {
+        blobFrame.vertex( points[j].x, points[j].y );
+      }
+      blobFrame.endShape(CLOSE);
+    }
+
+    blobFrame.noStroke();
+    blobFrame.fill(255, 0, 255);
+    blobFrame.text( circumference, centroid.x+5, centroid.y+15 );
+  }
+  blobFrame.resize( imageSize, 0 );
+  blobFrame.endDraw();
+  image( blobFrame, imageX, imageY );
 }
 
 
@@ -182,13 +204,13 @@ void initGui()
   setPath.setCaptionLabel( " <PATH>" );
   setPath.setColor( c );
   
-  controlP5.Slider scrubber = controlP5.addSlider( "scrubber", 1, files.length, 0, windowLeft, windowHeight - 15, windowWidth, 15 );
+  controlP5.Slider scrubber = controlP5.addSlider( "scrubber", 1, files.length-1, 0, windowLeft, windowHeight - 15, windowWidth, 15 );
   scrubber.setMin( 1 );
   scrubber.setNumberOfTickMarks( files.length );
   scrubber.snapToTickMarks( true );
   scrubber.setSliderMode(Slider.FLEXIBLE);
   int currFileNumber = int( scrubber.valueLabel().toString() );
-  scrubber.setValueLabel( "File " + currFileNumber + " of " + files.length );
+  scrubber.setValueLabel( "File " + currFileNumber + " of " + (files.length-1) );
   scrubber.setCaptionLabel( "" );
   scrubber.setColor( c );
   
@@ -196,27 +218,46 @@ void initGui()
   int verticalSpacer = 25;
     
   // Image Control
-  controlP5.Slider imageSize = controlP5.addSlider( "imageSize", windowWidth / 2, windowWidth * 2, windowWidth, horizMargin, verticalSpacer * 3, 300, 20 );
+  controlP5.Slider imageSize = controlP5.addSlider( "imageSize", windowWidth / 2, windowWidth * 2, windowWidth, horizMargin, verticalSpacer * 3, 250, 20 );
   imageSize.setCaptionLabel( "Size" );
-  imageSize.captionLabel().style().setMarginLeft( -303 );
-  imageSize.valueLabel().style().setMarginLeft( 250 );
-  //imageSize.captionLabel().style().setMarginTop( -20 );
+  imageSize.captionLabel().style().setMarginLeft( -253 );
+  imageSize.valueLabel().style().setMarginLeft( 200 );
   
-  controlP5.Slider imageX = controlP5.addSlider( "imageX", windowLeft - 100, width - windowWidth/2, windowLeft, horizMargin, verticalSpacer * 4, 300, 20 );
-  imageX.captionLabel().style().setMarginLeft( - 303 );
-  imageX.valueLabel().style().setMarginLeft( 250 );
+  controlP5.Textfield imageSizeText = controlP5.addTextfield( "imageSizeText", 255 + horizMargin, verticalSpacer * 3, 50, 20 );
+  imageSizeText.setValue( windowWidth );
+  imageSizeText.setColorBackground( color( 90 ) );
+  imageSizeText.setCaptionLabel( "" );
+  imageSizeText.setAutoClear( true );
   
-  controlP5.Slider imageY = controlP5.addSlider( "imageY", -500, height/2, horizMargin, horizMargin, verticalSpacer * 5, 300, 20 );
-  imageY.captionLabel().style().setMarginLeft( - 303 );
-  imageY.valueLabel().style().setMarginLeft( 250 );
+  controlP5.Slider imageX = controlP5.addSlider( "imageX", windowLeft - 100, width - windowWidth/2, windowLeft, horizMargin, verticalSpacer * 4, 250, 20 );
+  imageX.captionLabel().style().setMarginLeft( -253 );
+  imageX.valueLabel().style().setMarginLeft( 200 );
   
-  controlP5.Button resetImage = controlP5.addButton( "resetImage", 0, horizMargin + 300 - 50, verticalSpacer * 6, 50, 20 );
+  controlP5.Textfield imageXText = controlP5.addTextfield( "imageXText", 255 + horizMargin, verticalSpacer * 4, 50, 20 );
+  imageXText.setValue( windowWidth );
+  imageXText.setColorBackground( color( 90 ) );
+  imageXText.setCaptionLabel( "" );
+  imageXText.setAutoClear( true );
+  
+  controlP5.Slider imageY = controlP5.addSlider( "imageY", -500, height/2, horizMargin, horizMargin, verticalSpacer * 5, 250, 20 );
+  imageY.captionLabel().style().setMarginLeft( - 253 );
+  imageY.valueLabel().style().setMarginLeft( 200 );
+  
+  controlP5.Textfield imageYText = controlP5.addTextfield( "imageYText", 255 + horizMargin, verticalSpacer * 5, 50, 20 );
+  imageYText.setValue( windowWidth );
+  imageYText.setColorBackground( color( 90 ) );
+  imageYText.setCaptionLabel( "" );
+  imageYText.setAutoClear( true );
+  
+  controlP5.Button resetImage = controlP5.addButton( "resetImage", 0, horizMargin + 300 - 45, verticalSpacer * 6, 50, 20 );
   resetImage.setCaptionLabel( "reset" );
-  //resetImage.captionLabel().style().setMarginLeft(); 
+   
+  
   
   // Blob Detection Adjustment
-  controlP5.Toggle blobToggle = controlP5.addToggle( "blobToggle", false, horizMargin, verticalSpacer * 16, 20, 20 );
-  blobToggle.setCaptionLabel( "Blob Detection ON/OFF" );
+  controlP5.Toggle blobToggle = controlP5.addToggle( "blobToggle", false, horizMargin, verticalSpacer * 10, 20, 20 );
+  blobToggle.setCaptionLabel( "ON/OFF" );
+  blobToggle.captionLabel().style().setMarginLeft( 25 ).setMarginTop( -20 );
 }
 
 
@@ -240,6 +281,7 @@ void drawText()
   String relativePath  = ".../" + pathStrings[ pathStrings.length-2 ] + "/" + pathStrings[ pathStrings.length - 1 ];
   text( relativePath, windowLeft + 90, height - 12 ); 
   text( "IMAGE ADJUSTMENT", horizMargin, horizMargin * 2 );
+  text( "BLOB DETECTION SETTINGS", horizMargin, horizMargin * 9 );
 }
 
 void resetImage()
@@ -252,17 +294,33 @@ void resetImage()
   controlP5.getController( "imageY" ).setValue( horizMargin );
 }
 
-
-void showGuiOutlines()
+void imageSizeText( String theValue )
 {
-  // LEFT PANEL
-  noFill();
-  stroke( 255, 0, 0 );
-  rect( horizMargin, vertMargin, panelWidth, height - (vertMargin*4) );
-  
-  // WINDOW
-  stroke( 0, 0, 255 );
-  rect( windowLeft, horizMargin, windowWidth, windowHeight );
+  int num = int( theValue );
+  controlP5.Controller imageSizeF = controlP5.getController( "imageSize" );
+  imageSizeF.setValue( num );
+  imageSizeF.setValueLabel( theValue );
+}
+
+void imageXText( String theValue )
+{
+  int num = int( theValue );
+  controlP5.Controller imageXF = controlP5.getController( "imageX" );
+  imageXF.setValue( num );
+  imageXF.setValueLabel( theValue );
+}
+
+void imageYText( String theValue )
+{
+  int num = int( theValue );
+  controlP5.Controller imageYF = controlP5.getController( "imageY" );
+  imageYF.setValue( num );
+  imageYF.setValueLabel( theValue ); 
+}
+
+void blobToggle()
+{
+  detectBlobs = !detectBlobs; 
 }
 
 
