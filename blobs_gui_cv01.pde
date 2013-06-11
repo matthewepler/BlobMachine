@@ -13,7 +13,6 @@
  -- save as PNG to preserve alpha masking
  */
 
-import processing.opengl.*;
 import hypermedia.video.*;
 import java.awt.*;
 import controlP5.*;
@@ -41,7 +40,7 @@ int heightAdjust = 50;
 int windowLeft;
 int windowWidth;
 int windowHeight;
-int smallText   = 16;
+int smallText   = 14;
 int largeText   = 16;
 color clearText = color( 225 );
 color valueText = color( 20, 214, 255 );
@@ -50,6 +49,7 @@ int imageX, imageY, imageSize, imageAlpha;
 boolean detectBlobs;
 int minArea, maxArea, maxBlobs, maxVertices;
 boolean findHoles;
+Color blobFill, blobStroke, blobAlpha;
 
 void setup() 
 {  
@@ -86,7 +86,7 @@ void setup()
 
 void draw()
 {
-  background( 90 ); 
+  background( 40 ); 
   
   if( detectBlobs )
   {
@@ -107,6 +107,7 @@ void draw()
   }
   
   drawText();
+  drawColorBoxes();
 }
 
 
@@ -339,6 +340,23 @@ void initGui()
   //resetBlobs
   controlP5.Button resetBlobs = controlP5.addButton( "resetBlobs", 0, horizMargin + 300 - 45, verticalSpacer * 15, 50, 20 );
   resetBlobs.setCaptionLabel( "reset" );
+  
+  //blob colors
+  controlP5.Textfield blobFillText = controlP5.addTextfield( "blobFillText", horizMargin + 240, int(verticalSpacer * 17.75), 65, 20 );
+  blobFillText.setCaptionLabel( "" );
+  blobFillText.setColorBackground( color( 90 ) );
+  blobFillText.setAutoClear( false );
+  
+  controlP5.Textfield blobStrokeText = controlP5.addTextfield( "blobStrokeText", horizMargin + 240, int(verticalSpacer * 18.75), 65, 20 );
+  blobStrokeText.setCaptionLabel( "" );
+  blobStrokeText.setColorBackground( color( 90 ) );
+  blobStrokeText.setAutoClear( false );
+  
+  controlP5.Textfield blobAlphaText = controlP5.addTextfield( "blobAlphaText", horizMargin + 240, int(verticalSpacer * 19.75), 65, 20 );
+  blobAlphaText.setValue( 255 );
+  blobAlphaText.setCaptionLabel( "" );
+  blobAlphaText.setColorBackground( color( 90 ) );
+  blobAlphaText.setAutoClear( false );
 }
 
 
@@ -363,6 +381,22 @@ void drawText()
   text( relativePath, windowLeft + 90, height - 12 ); 
   text( "IMAGE ADJUSTMENT", horizMargin, horizMargin * 2 );
   text( "BLOB DETECTION SETTINGS", horizMargin, horizMargin * 9 );
+  text( "COLOR SETTINGS", horizMargin, 425 );
+  fill( valueText, 155 );
+  text( "Blob", horizMargin, 460 );
+  fill( 255 );
+  textSize( smallText );
+  text( "Fill",   205, 460 );
+  text( "Stroke", 205, 485 );
+  text( "Alpha",  205, 510 );
+}
+
+void drawColorBoxes()
+{
+  //blob color
+  stroke( blobStroke );
+  fill( blobFill, blobAlpha );
+  rect( 50, 460, 75, 75 ); 
 }
 
 void resetImage()
@@ -461,6 +495,25 @@ void resetBlobs()
   controlP5.getController( "maxArea" ).setValue( maxArea );
   controlP5.getController( "maxBlobs" ).setValue( maxBlobs );
   controlP5.getController( "findHoles" ).setValue( 1 );
+}
+
+void blobStrokeText( String theValue )
+{
+  int num = int( theValue );
+  blobStroke = num; 
+}
+
+void blobFillText( String theValue )
+{
+   blobFill = theValue;
+//  String[] colorString = split( theValue, "," );
+//  blobFill =  new Color( int( colorString[0] ), int( colorString[1] ), int( colorString[2] ) );
+}
+
+void blobAlphaText( String theValue )
+{
+  int num = int( theValue );
+  blobAlpha = num; 
 }
 
 
