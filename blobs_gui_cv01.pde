@@ -10,7 +10,7 @@
  
  // TO ADD
  -- button to launch OS directory window
- 
+ -- save as PNG to preserve alpha masking
  */
 
 import processing.opengl.*;
@@ -261,6 +261,16 @@ void initGui()
   blobToggle.setCaptionLabel( "ON/OFF" );
   blobToggle.captionLabel().style().setMarginLeft( 25 ).setMarginTop( -20 );
   
+  controlP5.Slider threshold = controlP5.addSlider( "threshold", 1, 300, 80, horizMargin, verticalSpacer * 11, 250, 20 );
+  threshold.captionLabel().style().setMarginLeft( -253 );
+  threshold.valueLabel().style().setMarginLeft( 200 );
+  
+  controlP5.Textfield thresholdText = controlP5.addTextfield( "thresholdText", 255 + horizMargin, verticalSpacer * 11, 50, 20 );
+  thresholdText.setValue( 80 );
+  thresholdText.setColorBackground( color( 90 ) );
+  thresholdText.setCaptionLabel( "" );
+  thresholdText.setAutoClear( true );
+  
 }
 
 
@@ -324,6 +334,14 @@ void imageYText( String theValue )
 void blobToggle()
 {
   detectBlobs = !detectBlobs; 
+}
+
+void thresholdText( String theValue )
+{
+   int num = int( theValue );
+   controlP5.Controller thresholdF = controlP5.getController( "threshold" );
+   thresholdF.setValue( num );
+   thresholdF.setValueLabel( theValue );
 }
 
 
