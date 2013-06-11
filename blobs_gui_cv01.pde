@@ -45,7 +45,7 @@ int largeText   = 16;
 color clearText = color( 225 );
 color valueText = color( 20, 214, 255 );
 PFont guiFont;
-int imageX, imageY, imageSize;
+int imageX, imageY, imageSize, imageAlpha;
 boolean detectBlobs;
 
 
@@ -71,6 +71,7 @@ void setup()
   imageX = windowLeft;
   imageY = 25;
   imageSize = windowWidth;
+  imageAlpha = 255;
 }
 
 
@@ -84,7 +85,9 @@ void draw()
     String currentFile = files[ currentFrame ];
     PImage currentImage = loadImage( files[ currentFrame ] );
     currentImage.resize( imageSize, 0 );
+    tint( 90, imageAlpha );
     image( currentImage, imageX, imageY );
+    noTint();
     detectBlobsSingleImage( currentFile );
   } else {
     // just show the image by itself
@@ -248,16 +251,16 @@ void initGui()
   imageYText.setColorBackground( color( 90 ) );
   imageYText.setCaptionLabel( "" );
   imageYText.setAutoClear( true );
-  
-  controlP5.Button resetImage = controlP5.addButton( "resetImage", 0, horizMargin + 300 - 45, verticalSpacer * 6, 50, 20 );
+    
+  controlP5.Button resetImage = controlP5.addButton( "resetImage", 0, horizMargin + 300 - 45, verticalSpacer * 7, 50, 20 );
   resetImage.setCaptionLabel( "reset" );
    
-  
   
   // Blob Detection Adjustment
   controlP5.Toggle blobToggle = controlP5.addToggle( "blobToggle", false, horizMargin, verticalSpacer * 10, 20, 20 );
   blobToggle.setCaptionLabel( "ON/OFF" );
   blobToggle.captionLabel().style().setMarginLeft( 25 ).setMarginTop( -20 );
+  
 }
 
 
