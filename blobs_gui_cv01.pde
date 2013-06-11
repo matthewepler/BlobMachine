@@ -371,6 +371,7 @@ void resetImage()
   imageSize = windowWidth;
   imageX = windowLeft;
   imageY = horizMargin;
+  controlP5.getController( "imageAlpha" ).setValue( imageAlpha );
   controlP5.getController( "imageSize" ).setValue( windowWidth );
   controlP5.getController( "imageX" ).setValue( windowLeft );
   controlP5.getController( "imageY" ).setValue( horizMargin );
