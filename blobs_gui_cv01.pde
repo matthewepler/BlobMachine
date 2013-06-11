@@ -49,7 +49,7 @@ int imageX, imageY, imageSize, imageAlpha;
 boolean detectBlobs;
 int minArea, maxArea, maxBlobs, maxVertices;
 boolean findHoles;
-Color blobFill, blobStroke, blobAlpha;
+color blobFill, blobStroke, blobAlpha;
 
 void setup() 
 {  
@@ -161,8 +161,8 @@ void detectBlobsSingleImage( String filename )
     blobFrame.text( area, centroid.x+5, centroid.y+5 );
 
 
-    blobFrame.fill(255, 0, 255, 64);
-    blobFrame.stroke(255, 0, 255);
+    blobFrame.fill( blobFill, blobAlpha );
+    blobFrame.stroke( blobStroke );
     if ( points.length>0 ) {
       blobFrame.beginShape();
       for ( int j=0; j<points.length; j++ ) {
@@ -353,10 +353,11 @@ void initGui()
   blobStrokeText.setAutoClear( false );
   
   controlP5.Textfield blobAlphaText = controlP5.addTextfield( "blobAlphaText", horizMargin + 240, int(verticalSpacer * 19.75), 65, 20 );
-  blobAlphaText.setValue( 255 );
+  blobAlphaText.setValue( "255" );
   blobAlphaText.setCaptionLabel( "" );
   blobAlphaText.setColorBackground( color( 90 ) );
   blobAlphaText.setAutoClear( false );
+  blobAlphaText.submit();
 }
 
 
@@ -383,6 +384,7 @@ void drawText()
   text( "BLOB DETECTION SETTINGS", horizMargin, horizMargin * 9 );
   text( "COLOR SETTINGS", horizMargin, 425 );
   fill( valueText, 155 );
+  text( "(r,g,b)", horizMargin + 150, 425 );
   text( "Blob", horizMargin, 460 );
   fill( 255 );
   textSize( smallText );
@@ -394,9 +396,10 @@ void drawText()
 void drawColorBoxes()
 {
   //blob color
+  strokeWeight( 2 );
   stroke( blobStroke );
   fill( blobFill, blobAlpha );
-  rect( 50, 460, 75, 75 ); 
+  rect( 95, 445, 75, 75 ); 
 }
 
 void resetImage()
@@ -499,15 +502,28 @@ void resetBlobs()
 
 void blobStrokeText( String theValue )
 {
-  int num = int( theValue );
-  blobStroke = num; 
+  if( theValue.contains( "," ) )
+  {
+    String[] colorString = split( theValue, "," );
+    blobStroke =  color( int( colorString[0] ), int( colorString[1] ), int( colorString[2] ) );
+  } 
+  else 
+  {
+    blobStroke = color( int( theValue ) ); 
+  } 
 }
 
 void blobFillText( String theValue )
 {
-   blobFill = theValue;
-//  String[] colorString = split( theValue, "," );
-//  blobFill =  new Color( int( colorString[0] ), int( colorString[1] ), int( colorString[2] ) );
+  if( theValue.contains( "," ) )
+  {
+    String[] colorString = split( theValue, "," );
+    blobFill =  color( int( colorString[0] ), int( colorString[1] ), int( colorString[2] ) );
+  } 
+  else 
+  {
+    blobFill = color( int( theValue ) ); 
+  } 
 }
 
 void blobAlphaText( String theValue )
