@@ -50,6 +50,8 @@ boolean detectBlobs;
 int minArea, maxArea, maxBlobs, maxVertices;
 boolean findHoles;
 color blobFill, blobStroke, blobAlpha;
+color centrStroke, centrAlpha;
+color textColor;
 
 void setup() 
 {  
@@ -151,16 +153,6 @@ void detectBlobsSingleImage( String filename )
     blobFrame.stroke( blobs[i].isHole ? 128 : 64 );
     blobFrame.rect( bounding_rect.x, bounding_rect.y, bounding_rect.width, bounding_rect.height );
 
-
-    // centroid
-    blobFrame.stroke(0, 0, 255);
-    blobFrame.line( centroid.x-5, centroid.y, centroid.x+5, centroid.y );
-    blobFrame.line( centroid.x, centroid.y-5, centroid.x, centroid.y+5 );
-    blobFrame.noStroke();
-    blobFrame.fill(0, 0, 255);
-    blobFrame.text( area, centroid.x+5, centroid.y+5 );
-
-
     blobFrame.fill( blobFill, blobAlpha );
     blobFrame.stroke( blobStroke );
     if ( points.length>0 ) {
@@ -170,9 +162,15 @@ void detectBlobsSingleImage( String filename )
       }
       blobFrame.endShape(CLOSE);
     }
+    
+    // centroid
+    blobFrame.stroke( centrStroke, centrAlpha );
+    blobFrame.line( centroid.x-5, centroid.y, centroid.x+5, centroid.y );
+    blobFrame.line( centroid.x, centroid.y-5, centroid.x, centroid.y+5 );
 
+    // text value
     blobFrame.noStroke();
-    blobFrame.fill(255, 0, 255);
+    blobFrame.fill( textColor );
     blobFrame.text( circumference, centroid.x+5, centroid.y+15 );
   }
   blobFrame.resize( imageSize, 0 );
@@ -358,6 +356,19 @@ void initGui()
   blobAlphaText.setColorBackground( color( 90 ) );
   blobAlphaText.setAutoClear( false );
   blobAlphaText.submit();
+  
+  //centroid colors  
+  controlP5.Textfield centrStrokeText = controlP5.addTextfield( "centrStrokeText", horizMargin + 240, 550, 65, 20 );
+  centrStrokeText.setCaptionLabel( "" );
+  centrStrokeText.setColorBackground( color( 90 ) );
+  centrStrokeText.setAutoClear( false );
+  
+  controlP5.Textfield centrAlphaText = controlP5.addTextfield( "centrAlphaText", horizMargin + 240, 575, 65, 20 );
+  centrAlphaText.setValue( "255" );
+  centrAlphaText.setCaptionLabel( "" );
+  centrAlphaText.setColorBackground( color( 90 ) );
+  centrAlphaText.setAutoClear( false );
+  centrAlphaText.submit();
 }
 
 
@@ -386,11 +397,14 @@ void drawText()
   fill( valueText, 155 );
   text( "(r,g,b)", horizMargin + 150, 425 );
   text( "Blob", horizMargin, 460 );
+  text( "Centr.", horizMargin, 560 );
   fill( 255 );
   textSize( smallText );
   text( "Fill",   205, 460 );
   text( "Stroke", 205, 485 );
   text( "Alpha",  205, 510 );
+  text( "Stroke", 205, 565 );
+  text( "Alpha",  205, 590 );
 }
 
 void drawColorBoxes()
@@ -400,6 +414,11 @@ void drawColorBoxes()
   stroke( blobStroke );
   fill( blobFill, blobAlpha );
   rect( 95, 445, 75, 75 ); 
+  
+  //centroid stroke
+  stroke( centrStroke, centrAlpha );
+  line( 130, 545, 130, 595 );
+  line( 105, 570, 155, 570 );
 }
 
 void resetImage()
@@ -532,6 +551,24 @@ void blobAlphaText( String theValue )
   blobAlpha = num; 
 }
 
+void centrStrokeText( String theValue )
+{
+  if( theValue.contains( "," ) )
+  {
+    String[] colorString = split( theValue, "," );
+    centrStroke =  color( int( colorString[0] ), int( colorString[1] ), int( colorString[2] ) );
+  } 
+  else 
+  {
+    centrStroke = color( int( theValue ) ); 
+  } 
+}
+
+void centrAlphaText( String theValue )
+{
+  int num = int( theValue );
+  centrAlpha = num; 
+}
 
 public void stop() {
   opencv.stop();
