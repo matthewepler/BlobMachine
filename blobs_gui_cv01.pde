@@ -1,6 +1,6 @@
 /*
 
- A gui based system for detecting blobs in a series of still images.
+ A gui based system for detecting blobs in a series of still images using OpenCV 1.1 library.
  
  Matthew Epler
  2013
@@ -29,6 +29,7 @@ boolean find = true;
 File dir;
 String path;
 String[] files;
+String currentFile;
 int counter;
 
 // GUI VARIABLES
@@ -47,7 +48,8 @@ color valueText = color( 20, 214, 255 );
 PFont guiFont;
 int imageX, imageY, imageSize, imageAlpha;
 boolean detectBlobs;
-
+int minArea, maxArea, maxBlobs, maxVertices;
+boolean findHoles;
 
 void setup() 
 {  
@@ -63,8 +65,7 @@ void setup()
   guiFont = loadFont( "AndaleMono-48.vlw" );
   textFont( guiFont );
   initGui();
-
-  threshold = 80;
+  
   currentFrame = 1; 
   counter = 1;
   
@@ -72,6 +73,14 @@ void setup()
   imageY = 25;
   imageSize = windowWidth;
   imageAlpha = 255;
+  
+  threshold = 80;
+  minArea = 100;
+  maxArea = (width*height) / 3;
+  maxBlobs = 20;
+  findHoles = true;
+  
+  detectBlobs = true;
 }
 
 
@@ -82,10 +91,10 @@ void draw()
   if( detectBlobs )
   {
     // detect blobs on the current image and display
-    String currentFile = files[ currentFrame ];
+    currentFile = files[ currentFrame ];
     PImage currentImage = loadImage( files[ currentFrame ] );
     currentImage.resize( imageSize, 0 );
-    tint( 90, imageAlpha );
+    tint( 255, imageAlpha );
     image( currentImage, imageX, imageY );
     noTint();
     detectBlobsSingleImage( currentFile );
@@ -123,7 +132,7 @@ void detectBlobsSingleImage( String filename )
   PGraphics blobFrame = createGraphics( opencv.width, opencv.height, P2D );
   opencv.absDiff();
   opencv.threshold(threshold);
-  Blob[] blobs = opencv.blobs( 100, width*height/3, 20, true ); // adjust first two values for min/max size of blobs
+  Blob[] blobs = opencv.blobs( minArea, maxArea, maxBlobs, findHoles ); // uses basic constructor for blobs() in OpenCV 1.1
 
   blobFrame.beginDraw();
   blobFrame.background( 0, 0 );
@@ -220,7 +229,8 @@ void initGui()
   // LEFT PANEL
   int verticalSpacer = 25;
     
-  // Image Control
+  // IMAGE ADJUSTMENTS
+  //imageSize
   controlP5.Slider imageSize = controlP5.addSlider( "imageSize", windowWidth / 2, windowWidth * 2, windowWidth, horizMargin, verticalSpacer * 3, 250, 20 );
   imageSize.setCaptionLabel( "Size" );
   imageSize.captionLabel().style().setMarginLeft( -253 );
@@ -232,6 +242,7 @@ void initGui()
   imageSizeText.setCaptionLabel( "" );
   imageSizeText.setAutoClear( true );
   
+  //imageX
   controlP5.Slider imageX = controlP5.addSlider( "imageX", windowLeft - 100, width - windowWidth/2, windowLeft, horizMargin, verticalSpacer * 4, 250, 20 );
   imageX.captionLabel().style().setMarginLeft( -253 );
   imageX.valueLabel().style().setMarginLeft( 200 );
@@ -242,6 +253,7 @@ void initGui()
   imageXText.setCaptionLabel( "" );
   imageXText.setAutoClear( true );
   
+  //imageY
   controlP5.Slider imageY = controlP5.addSlider( "imageY", -500, height/2, horizMargin, horizMargin, verticalSpacer * 5, 250, 20 );
   imageY.captionLabel().style().setMarginLeft( - 253 );
   imageY.valueLabel().style().setMarginLeft( 200 );
@@ -251,19 +263,39 @@ void initGui()
   imageYText.setColorBackground( color( 90 ) );
   imageYText.setCaptionLabel( "" );
   imageYText.setAutoClear( true );
-    
+  
+  //alpha
+  controlP5.Slider imageAlpha = controlP5.addSlider( "imageAlpha", 0, 255, 255, horizMargin, verticalSpacer * 6, 250, 20 );
+  imageAlpha.setCaptionLabel( "alpha" );
+  imageAlpha.captionLabel().style().setMarginLeft( - 253 );
+  imageAlpha.valueLabel().style().setMarginLeft( 200 );
+  
+  controlP5.Textfield imageAlphaText = controlP5.addTextfield( "imageAlphaText", 255 + horizMargin, verticalSpacer * 6, 50, 20 );
+  imageAlphaText.setValue( 255 );
+  imageAlphaText.setColorBackground( color( 90 ) );
+  imageAlphaText.setCaptionLabel( "" );
+  imageAlphaText.setAutoClear( true );
+  
+  //reset
   controlP5.Button resetImage = controlP5.addButton( "resetImage", 0, horizMargin + 300 - 45, verticalSpacer * 7, 50, 20 );
   resetImage.setCaptionLabel( "reset" );
    
   
-  // Blob Detection Adjustment
-  controlP5.Toggle blobToggle = controlP5.addToggle( "blobToggle", false, horizMargin, verticalSpacer * 10, 20, 20 );
+  // BLOB DETECTION ADJUSTMENT
+  // On/Off
+  controlP5.Toggle blobToggle = controlP5.addToggle( "blobToggle", true, horizMargin, verticalSpacer * 10, 20, 20 );
   blobToggle.setCaptionLabel( "ON/OFF" );
-  blobToggle.captionLabel().style().setMarginLeft( 25 ).setMarginTop( -20 );
+  blobToggle.captionLabel().style().setMarginLeft( 25 ).setMarginTop( -23 );
   
+  //findHoles
+  controlP5.Toggle findHoles = controlP5.addToggle( "findHoles", true, horizMargin + 140, verticalSpacer * 10, 20, 20 );
+  findHoles.setCaptionLabel( "find holes" );
+  findHoles.captionLabel().style().setMarginLeft( 25 ).setMarginTop( -23 );
+  
+  // Threshold
   controlP5.Slider threshold = controlP5.addSlider( "threshold", 1, 300, 80, horizMargin, verticalSpacer * 11, 250, 20 );
   threshold.captionLabel().style().setMarginLeft( -253 );
-  threshold.valueLabel().style().setMarginLeft( 200 );
+  threshold.valueLabel().style().setMarginLeft( 190 );
   
   controlP5.Textfield thresholdText = controlP5.addTextfield( "thresholdText", 255 + horizMargin, verticalSpacer * 11, 50, 20 );
   thresholdText.setValue( 80 );
@@ -271,6 +303,42 @@ void initGui()
   thresholdText.setCaptionLabel( "" );
   thresholdText.setAutoClear( true );
   
+  //minArea
+  controlP5.Slider minArea = controlP5.addSlider( "minArea", 1, 200, 100, horizMargin, verticalSpacer * 12, 250, 20 );
+  minArea.captionLabel().style().setMarginLeft( -253 );
+  minArea.valueLabel().style().setMarginLeft( 190 );
+  
+  controlP5.Textfield minAreaText = controlP5.addTextfield( "minAreaText", 255 + horizMargin, verticalSpacer * 12, 50, 20 );
+  minAreaText.setValue( 80 );
+  minAreaText.setColorBackground( color( 90 ) );
+  minAreaText.setCaptionLabel( "" );
+  minAreaText.setAutoClear( true );
+  
+  //maxArea
+  controlP5.Slider maxArea = controlP5.addSlider( "maxArea", 100, 300000, 150000, horizMargin, verticalSpacer * 13, 250, 20 );
+  maxArea.captionLabel().style().setMarginLeft( -253 );
+  maxArea.valueLabel().style().setMarginLeft( 190 );
+  
+  controlP5.Textfield maxAreaText = controlP5.addTextfield( "maxAreaText", 255 + horizMargin, verticalSpacer * 13, 50, 20 );
+  maxAreaText.setValue( 80 );
+  maxAreaText.setColorBackground( color( 90 ) );
+  maxAreaText.setCaptionLabel( "" );
+  maxAreaText.setAutoClear( true );
+  
+  //maxBlobs
+  controlP5.Slider maxBlobs = controlP5.addSlider( "maxBlobs", 1, 150, 20, horizMargin, verticalSpacer * 14, 250, 20 );
+  maxBlobs.captionLabel().style().setMarginLeft( -253 );
+  maxBlobs.valueLabel().style().setMarginLeft( 190 );
+  
+  controlP5.Textfield maxBlobsText = controlP5.addTextfield( "maxBlobsText", 255 + horizMargin, verticalSpacer * 14, 50, 20 );
+  maxBlobsText.setValue( 80 );
+  maxBlobsText.setColorBackground( color( 90 ) );
+  maxBlobsText.setCaptionLabel( "" );
+  maxBlobsText.setAutoClear( true );
+  
+  //resetBlobs
+  controlP5.Button resetBlobs = controlP5.addButton( "resetBlobs", 0, horizMargin + 300 - 45, verticalSpacer * 15, 50, 20 );
+  resetBlobs.setCaptionLabel( "reset" );
 }
 
 
@@ -299,6 +367,7 @@ void drawText()
 
 void resetImage()
 {
+  imageAlpha = 255;
   imageSize = windowWidth;
   imageX = windowLeft;
   imageY = horizMargin;
@@ -331,6 +400,14 @@ void imageYText( String theValue )
   imageYF.setValueLabel( theValue ); 
 }
 
+void imageAlphaText( String theValue )
+{
+  int num = int( theValue );
+  controlP5.Controller imageAlphaTextF = controlP5.getController( "imageAlpha" );
+  imageAlphaTextF.setValue( num );
+  imageAlphaTextF.setValueLabel( theValue ); 
+}
+
 void blobToggle()
 {
   detectBlobs = !detectBlobs; 
@@ -342,6 +419,47 @@ void thresholdText( String theValue )
    controlP5.Controller thresholdF = controlP5.getController( "threshold" );
    thresholdF.setValue( num );
    thresholdF.setValueLabel( theValue );
+}
+
+void minAreaText( String theValue )
+{
+  int num = int( theValue );
+  controlP5.Controller minAreaF = controlP5.getController( "minArea" );
+  minAreaF.setValue (num );
+  minAreaF.setValueLabel( theValue ); 
+  detectBlobsSingleImage( currentFile );
+}
+
+void maxAreaText( String theValue )
+{
+  int num = int( theValue );
+  controlP5.Controller maxAreaF = controlP5.getController( "maxArea" );
+  maxAreaF.setValue (num );
+  maxAreaF.setValueLabel( theValue ); 
+  detectBlobsSingleImage( currentFile );
+}
+
+void maxBlobsText( String theValue )
+{
+  int num = int( theValue );
+  controlP5.Controller maxBlobsF = controlP5.getController( "maxBlobs" );
+  maxBlobsF.setValue (num );
+  maxBlobsF.setValueLabel( theValue ); 
+  detectBlobsSingleImage( currentFile );
+}
+
+void resetBlobs()
+{
+  threshold = 80;
+  minArea = 100;
+  maxArea = (width*height) / 3;
+  maxBlobs = 20;
+  findHoles = true;
+  controlP5.getController( "threshold" ).setValue( threshold );
+  controlP5.getController( "minArea" ).setValue( minArea );
+  controlP5.getController( "maxArea" ).setValue( maxArea );
+  controlP5.getController( "maxBlobs" ).setValue( maxBlobs );
+  controlP5.getController( "findHoles" ).setValue( 1 );
 }
 
 
