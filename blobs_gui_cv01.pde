@@ -49,7 +49,7 @@ int imageX, imageY, imageSize, imageAlpha;
 boolean detectBlobs;
 int minArea, maxArea, maxBlobs, maxVertices;
 boolean findHoles;
-color blobFill, blobStroke, blobAlpha;
+color blobFill, blobStroke, blobStrokeWeight, blobAlpha;
 color centrStroke, centrAlpha;
 color textColor;
 
@@ -83,6 +83,10 @@ void setup()
   findHoles = true;
   
   detectBlobs = true;
+  blobFill =    color( #18FF04 );
+  blobStroke =  color( #0028FF );
+  centrStroke = color( #FF6E32 );
+  blobStrokeWeight = 2;
 }
 
 
@@ -154,6 +158,7 @@ void detectBlobsSingleImage( String filename )
     blobFrame.rect( bounding_rect.x, bounding_rect.y, bounding_rect.width, bounding_rect.height );
 
     blobFrame.fill( blobFill, blobAlpha );
+    blobFrame.strokeWeight( blobStrokeWeight );
     blobFrame.stroke( blobStroke );
     if ( points.length>0 ) {
       blobFrame.beginShape();
