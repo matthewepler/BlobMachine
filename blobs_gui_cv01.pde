@@ -57,6 +57,7 @@ color textColor;
 int centrTextSize;
 int strokeSize;
 boolean includeOrigImage;
+boolean export;
 
 void setup() 
 {  
@@ -125,22 +126,6 @@ void draw()
 }
 
 
-void processAllImageFilesInDir()
-{
-  for (File child : dir.listFiles()) 
-  {
-    String filename = child.getName();
-    if ( !filename.contains("Store") && !filename.contains("vlw") )
-    {
-      detectBlobsSingleImage( filename );
-      save( "output/" + filename );
-      println( counter + " of " + files.length ); 
-      counter++;
-    }
-  }
-}
-
-
 void detectBlobsSingleImage( String filename )
 {
   opencv.loadImage( filename );
@@ -150,7 +135,15 @@ void detectBlobsSingleImage( String filename )
   Blob[] blobs = opencv.blobs( minArea, maxArea, maxBlobs, findHoles ); // uses basic constructor for blobs() in OpenCV 1.1
 
   blobFrame.beginDraw();
-  blobFrame.background( 0, 0 );
+  blobFrame.smooth();
+  if( includeOrigImage )
+      {
+        PImage origImage = loadImage( currentFile );
+        blobFrame.tint( 255, imageAlpha );
+        blobFrame.image( origImage, 0, 0 );
+        noTint();
+      } 
+      
   blobFrame.strokeWeight( strokeSize );
 
   for ( int i=0; i<blobs.length; i++ ) {
@@ -168,7 +161,7 @@ void detectBlobsSingleImage( String filename )
 
     blobFrame.fill( blobFill, blobAlpha );
     blobFrame.strokeWeight( strokeSize );
-    blobFrame.stroke( blobStroke );
+    blobFrame.stroke( blobStroke, blobAlpha );
     if ( points.length>0 ) {
       blobFrame.beginShape();
       for ( int j=0; j<points.length; j++ ) {
@@ -188,9 +181,24 @@ void detectBlobsSingleImage( String filename )
     blobFrame.textSize( centrTextSize );
     blobFrame.text( circumference, centroid.x+5, centroid.y+15 );
   }
-  blobFrame.resize( imageSize, 0 );
-  blobFrame.endDraw();
-  image( blobFrame, imageX, imageY );
+  if( export == true )
+  {
+    String dirName = year() + "_" + month() + "_" + day() + "_" + hour() + minute() + "/";
+    String thisFilename =  currentFile.substring( 0, currentFile.length() - 4 );
+    String suffix;
+    if( includeOrigImage )
+    {
+      suffix = ".jpg";
+    } else {
+      suffix = ".png";
+    }
+    blobFrame.save( dirName + thisFilename + hour() + minute() + millis() + suffix );
+    blobFrame.endDraw();
+  } else {
+    blobFrame.resize( imageSize, 0 );
+    blobFrame.endDraw();
+    image( blobFrame, imageX, imageY );
+  }
 }
 
 
@@ -198,73 +206,28 @@ void export( int _case )
 {
   switch( _case )
   {
-    case 0: // single frame
-      opencv.loadImage( currentFile );
-      PGraphics blobFrame = createGraphics( opencv.width, opencv.height, P2D );
-      opencv.absDiff();
-      opencv.threshold( threshold );
-      Blob[] blobs = opencv.blobs( minArea, maxArea, maxBlobs, findHoles ); // uses basic constructor for blobs() in OpenCV 1.1
-    
-      blobFrame.beginDraw();
-      if( includeOrigImage )
-      {
-        PImage origImage = loadImage( currentFile );
-        blobFrame.tint( 255, imageAlpha );
-        blobFrame.image( origImage, 0, 0 );
-        noTint();
-      } 
-      
-      blobFrame.strokeWeight( strokeSize );
-    
-      for ( int i=0; i<blobs.length; i++ ) {
-    
-        Rectangle bounding_rect  = blobs[i].rectangle;
-        float area = blobs[i].area;
-        float circumference = blobs[i].length;
-        Point centroid = blobs[i].centroid;
-        Point[] points = blobs[i].points;
-    
-        // large bounding rectangle
-        //    blobFrame.noFill();
-        //    blobFrame.stroke( blobs[i].isHole ? 128 : 64 );
-        //    blobFrame.rect( bounding_rect.x, bounding_rect.y, bounding_rect.width, bounding_rect.height );
-    
-        blobFrame.fill( blobFill, blobAlpha );
-        blobFrame.strokeWeight( strokeSize );
-        blobFrame.stroke( blobStroke );
-        if ( points.length>0 ) {
-          blobFrame.beginShape();
-          for ( int j=0; j<points.length; j++ ) {
-            blobFrame.vertex( points[j].x, points[j].y );
-          }
-          blobFrame.endShape(CLOSE);
-        }
-    
-        // centroid
-        blobFrame.stroke( centrStroke, centrAlpha );
-        blobFrame.line( centroid.x - (centrSize/2), centroid.y, centroid.x + (centrSize/2), centroid.y );
-        blobFrame.line( centroid.x, centroid.y - (centrSize/2), centroid.x, centroid.y + (centrSize/2) );
-    
-        // text value
-        blobFrame.noStroke();
-        blobFrame.fill( textColor, centrAlpha );
-        blobFrame.textSize( centrTextSize );
-        blobFrame.text( circumference, centroid.x+5, centroid.y+15 );
-      }
-      String dirName = year() + "_" + month() + "_" + day() + "_" + hour() + minute() + "/";
-      String thisFilename =  currentFile.substring( 0, currentFile.length() - 4 );
-      String suffix;
-      if( includeOrigImage )
-      {
-        suffix = ".jpg";
-      } else {
-        suffix = ".png";
-      }
-      blobFrame.save( dirName + thisFilename + hour() + minute() + millis() + suffix );
-      blobFrame.endDraw();
- 
+    case 0:
+      export = true;
+      detectBlobsSingleImage( currentFile );
+      println( "EXPORT COMPLETE" );
+      export = false;
+      break;
      
     case 1: // all frames 
+    export = true;
+    for (File child : dir.listFiles()) 
+    {
+      String filename = child.getName();
+      if ( !filename.contains("Store") && !filename.contains("vlw") )
+      {
+        detectBlobsSingleImage( filename );
+        println( counter + " of " + files.length ); 
+        counter++;
+      }
+    }
+    export = false;
+    println( "EXPORT COMPLETE" );
+    break;
   }
 }
 
@@ -329,7 +292,7 @@ void initGui()
   // IMAGE ADJUSTMENTS
   //imageSize
   controlP5.Slider imageSize = controlP5.addSlider( "imageSize", windowWidth / 2, windowWidth * 2, windowWidth, horizMargin, verticalSpacer * 3, 250, 20 );
-  imageSize.setCaptionLabel( "Size" );
+  imageSize.setCaptionLabel( "Size*" );
   imageSize.captionLabel().style().setMarginLeft( -253 );
   imageSize.valueLabel().style().setMarginLeft( 200 );
 
@@ -340,7 +303,7 @@ void initGui()
   imageSizeText.setAutoClear( true );
 
   //imageX
-  controlP5.Slider imageX = controlP5.addSlider( "imageX", windowLeft - 100, width - windowWidth/2, windowLeft, horizMargin, verticalSpacer * 4, 250, 20 );
+  controlP5.Slider imageX = controlP5.addSlider( "imageX*", windowLeft - 100, width - windowWidth/2, windowLeft, horizMargin, verticalSpacer * 4, 250, 20 );
   imageX.captionLabel().style().setMarginLeft( -253 );
   imageX.valueLabel().style().setMarginLeft( 200 );
 
@@ -351,7 +314,7 @@ void initGui()
   imageXText.setAutoClear( true );
 
   //imageY
-  controlP5.Slider imageY = controlP5.addSlider( "imageY", -500, height/2, horizMargin, horizMargin, verticalSpacer * 5, 250, 20 );
+  controlP5.Slider imageY = controlP5.addSlider( "imageY*", -500, height/2, horizMargin, horizMargin, verticalSpacer * 5, 250, 20 );
   imageY.captionLabel().style().setMarginLeft( - 253 );
   imageY.valueLabel().style().setMarginLeft( 200 );
 
@@ -511,7 +474,7 @@ void initGui()
   exportOne.setCaptionLabel( "Export Frame" );
   exportOne.captionLabel().style().setMarginLeft( 15 );
   
-  controlP5.Button exportAll = controlP5.addButton( "exportAll", 0, horizMargin + 150, 875, 140, boxHeight * 2 );
+  controlP5.Button exportAll = controlP5.addButton( "exportAll", 1, horizMargin + 150, 875, 140, boxHeight * 2 );
   //exportAll.setValue( 1 );
   exportAll.setCaptionLabel( "Export All" );
   exportAll.captionLabel().style().setMarginLeft( 23 );
@@ -560,7 +523,8 @@ void drawText()
   text( "Text",   190, 770 );
 
   fill( valueText, 155 );
-  text( "(all settings will be used)", horizMargin + 80, 820 );
+  textSize( 12 );
+  text( "* settings will not affect export", horizMargin, 185 );
 }
 
 void drawColorBoxes()
