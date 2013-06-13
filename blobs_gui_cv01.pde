@@ -49,10 +49,12 @@ int imageX, imageY, imageSize, imageAlpha;
 boolean detectBlobs;
 int minArea, maxArea, maxBlobs, maxVertices;
 boolean findHoles;
-color blobFill, blobStroke, blobStrokeWeight, blobAlpha;
+color blobFill, blobStroke, blobAlpha;
 color centrStroke, centrAlpha;
+int centrSize;
 color textColor;
 int centrTextSize;
+int strokeSize;
 
 void setup() 
 {  
@@ -87,8 +89,9 @@ void setup()
   blobFill =    color( #18FF04 );
   blobStroke =  color( #0028FF );
   centrStroke = color( #FF6E32 );
-  blobStrokeWeight = 2;
   centrTextSize = 10;
+  centrSize = 10;
+  strokeSize = 2;
 }
 
 
@@ -145,6 +148,7 @@ void detectBlobsSingleImage( String filename )
 
   blobFrame.beginDraw();
   blobFrame.background( 0, 0 );
+  blobFrame.strokeWeight( strokeSize );
   
   for ( int i=0; i<blobs.length; i++ ) {
 
@@ -154,13 +158,13 @@ void detectBlobsSingleImage( String filename )
     Point centroid = blobs[i].centroid;
     Point[] points = blobs[i].points;
 
-    // rectangle
-    blobFrame.noFill();
-    blobFrame.stroke( blobs[i].isHole ? 128 : 64 );
-    blobFrame.rect( bounding_rect.x, bounding_rect.y, bounding_rect.width, bounding_rect.height );
+    // large bounding rectangle
+//    blobFrame.noFill();
+//    blobFrame.stroke( blobs[i].isHole ? 128 : 64 );
+//    blobFrame.rect( bounding_rect.x, bounding_rect.y, bounding_rect.width, bounding_rect.height );
 
     blobFrame.fill( blobFill, blobAlpha );
-    blobFrame.strokeWeight( blobStrokeWeight );
+    blobFrame.strokeWeight( strokeSize );
     blobFrame.stroke( blobStroke );
     if ( points.length>0 ) {
       blobFrame.beginShape();
@@ -172,8 +176,8 @@ void detectBlobsSingleImage( String filename )
     
     // centroid
     blobFrame.stroke( centrStroke, centrAlpha );
-    blobFrame.line( centroid.x-5, centroid.y, centroid.x+5, centroid.y );
-    blobFrame.line( centroid.x, centroid.y-5, centroid.x, centroid.y+5 );
+    blobFrame.line( centroid.x - (centrSize/2), centroid.y, centroid.x + (centrSize/2), centroid.y );
+    blobFrame.line( centroid.x, centroid.y - (centrSize/2), centroid.x, centroid.y + (centrSize/2) );
 
     // text value
     blobFrame.noStroke();
@@ -209,6 +213,11 @@ void getDirectory( String s )
 
 void initGui()
 {
+  
+  int boxHeight = 20;
+  int imageBoxLength = 50;
+  int colorBoxLength = 80;
+  
   controlP5 = new ControlP5( this );
   controlP5.setControlFont( guiFont, 14 );
   CColor c =  new CColor();
@@ -243,7 +252,7 @@ void initGui()
   imageSize.captionLabel().style().setMarginLeft( -253 );
   imageSize.valueLabel().style().setMarginLeft( 200 );
   
-  controlP5.Textfield imageSizeText = controlP5.addTextfield( "imageSizeText", 255 + horizMargin, verticalSpacer * 3, 50, 20 );
+  controlP5.Textfield imageSizeText = controlP5.addTextfield( "imageSizeText", 255 + horizMargin, verticalSpacer * 3, imageBoxLength, boxHeight );
   imageSizeText.setValue( windowWidth );
   imageSizeText.setColorBackground( color( 90 ) );
   imageSizeText.setCaptionLabel( "" );
@@ -254,7 +263,7 @@ void initGui()
   imageX.captionLabel().style().setMarginLeft( -253 );
   imageX.valueLabel().style().setMarginLeft( 200 );
   
-  controlP5.Textfield imageXText = controlP5.addTextfield( "imageXText", 255 + horizMargin, verticalSpacer * 4, 50, 20 );
+  controlP5.Textfield imageXText = controlP5.addTextfield( "imageXText", 255 + horizMargin, verticalSpacer * 4, imageBoxLength, boxHeight );
   imageXText.setValue( windowWidth );
   imageXText.setColorBackground( color( 90 ) );
   imageXText.setCaptionLabel( "" );
@@ -265,7 +274,7 @@ void initGui()
   imageY.captionLabel().style().setMarginLeft( - 253 );
   imageY.valueLabel().style().setMarginLeft( 200 );
   
-  controlP5.Textfield imageYText = controlP5.addTextfield( "imageYText", 255 + horizMargin, verticalSpacer * 5, 50, 20 );
+  controlP5.Textfield imageYText = controlP5.addTextfield( "imageYText", 255 + horizMargin, verticalSpacer * 5, imageBoxLength, boxHeight );
   imageYText.setValue( windowWidth );
   imageYText.setColorBackground( color( 90 ) );
   imageYText.setCaptionLabel( "" );
@@ -277,14 +286,14 @@ void initGui()
   imageAlpha.captionLabel().style().setMarginLeft( - 253 );
   imageAlpha.valueLabel().style().setMarginLeft( 200 );
   
-  controlP5.Textfield imageAlphaText = controlP5.addTextfield( "imageAlphaText", 255 + horizMargin, verticalSpacer * 6, 50, 20 );
+  controlP5.Textfield imageAlphaText = controlP5.addTextfield( "imageAlphaText", 255 + horizMargin, verticalSpacer * 6, imageBoxLength, boxHeight );
   imageAlphaText.setValue( 255 );
   imageAlphaText.setColorBackground( color( 90 ) );
   imageAlphaText.setCaptionLabel( "" );
   imageAlphaText.setAutoClear( true );
   
   //reset
-  controlP5.Button resetImage = controlP5.addButton( "resetImage", 0, horizMargin + 300 - 45, verticalSpacer * 7, 50, 20 );
+  controlP5.Button resetImage = controlP5.addButton( "resetImage", 0, horizMargin + 300 - 45, verticalSpacer * 7, imageBoxLength, boxHeight );
   resetImage.setCaptionLabel( "reset" );
    
   
@@ -304,7 +313,7 @@ void initGui()
   threshold.captionLabel().style().setMarginLeft( -253 );
   threshold.valueLabel().style().setMarginLeft( 190 );
   
-  controlP5.Textfield thresholdText = controlP5.addTextfield( "thresholdText", 255 + horizMargin, verticalSpacer * 11, 50, 20 );
+  controlP5.Textfield thresholdText = controlP5.addTextfield( "thresholdText", 255 + horizMargin, verticalSpacer * 11, imageBoxLength, boxHeight );
   thresholdText.setValue( 80 );
   thresholdText.setColorBackground( color( 90 ) );
   thresholdText.setCaptionLabel( "" );
@@ -315,7 +324,7 @@ void initGui()
   minArea.captionLabel().style().setMarginLeft( -253 );
   minArea.valueLabel().style().setMarginLeft( 190 );
   
-  controlP5.Textfield minAreaText = controlP5.addTextfield( "minAreaText", 255 + horizMargin, verticalSpacer * 12, 50, 20 );
+  controlP5.Textfield minAreaText = controlP5.addTextfield( "minAreaText", 255 + horizMargin, verticalSpacer * 12, imageBoxLength, boxHeight );
   minAreaText.setValue( 80 );
   minAreaText.setColorBackground( color( 90 ) );
   minAreaText.setCaptionLabel( "" );
@@ -326,7 +335,7 @@ void initGui()
   maxArea.captionLabel().style().setMarginLeft( -253 );
   maxArea.valueLabel().style().setMarginLeft( 190 );
   
-  controlP5.Textfield maxAreaText = controlP5.addTextfield( "maxAreaText", 255 + horizMargin, verticalSpacer * 13, 50, 20 );
+  controlP5.Textfield maxAreaText = controlP5.addTextfield( "maxAreaText", 255 + horizMargin, verticalSpacer * 13, imageBoxLength, boxHeight );
   maxAreaText.setValue( 80 );
   maxAreaText.setColorBackground( color( 90 ) );
   maxAreaText.setCaptionLabel( "" );
@@ -337,57 +346,78 @@ void initGui()
   maxBlobs.captionLabel().style().setMarginLeft( -253 );
   maxBlobs.valueLabel().style().setMarginLeft( 190 );
   
-  controlP5.Textfield maxBlobsText = controlP5.addTextfield( "maxBlobsText", 255 + horizMargin, verticalSpacer * 14, 50, 20 );
+  controlP5.Textfield maxBlobsText = controlP5.addTextfield( "maxBlobsText", 255 + horizMargin, verticalSpacer * 14, imageBoxLength, boxHeight );
   maxBlobsText.setValue( 80 );
   maxBlobsText.setColorBackground( color( 90 ) );
   maxBlobsText.setCaptionLabel( "" );
   maxBlobsText.setAutoClear( true );
   
   //resetBlobs
-  controlP5.Button resetBlobs = controlP5.addButton( "resetBlobs", 0, horizMargin + 300 - 45, verticalSpacer * 15, 50, 20 );
+  controlP5.Button resetBlobs = controlP5.addButton( "resetBlobs", 0, horizMargin + 300 - 45, verticalSpacer * 15, imageBoxLength, boxHeight );
   resetBlobs.setCaptionLabel( "reset" );
   
   //blob colors
-  controlP5.Textfield blobFillText = controlP5.addTextfield( "blobFillText", horizMargin + 240, int(verticalSpacer * 17.75), 65, 20 );
+  controlP5.Textfield blobFillText = controlP5.addTextfield( "blobFillText", horizMargin + 225, int(verticalSpacer * 17.75), colorBoxLength, boxHeight );
   blobFillText.setCaptionLabel( "" );
   blobFillText.setColorBackground( color( 90 ) );
   blobFillText.setAutoClear( false );
   
-  controlP5.Textfield blobStrokeText = controlP5.addTextfield( "blobStrokeText", horizMargin + 240, int(verticalSpacer * 18.75), 65, 20 );
+  controlP5.Textfield blobStrokeText = controlP5.addTextfield( "blobStrokeText", horizMargin + 225, int(verticalSpacer * 18.75), colorBoxLength, boxHeight );
   blobStrokeText.setCaptionLabel( "" );
   blobStrokeText.setColorBackground( color( 90 ) );
   blobStrokeText.setAutoClear( false );
   
-  controlP5.Textfield blobAlphaText = controlP5.addTextfield( "blobAlphaText", horizMargin + 240, int(verticalSpacer * 19.75), 65, 20 );
+  controlP5.Textfield blobAlphaText = controlP5.addTextfield( "blobAlphaText", horizMargin + 225, int(verticalSpacer * 19.75), colorBoxLength, boxHeight );
   blobAlphaText.setValue( "255" );
   blobAlphaText.setCaptionLabel( "" );
   blobAlphaText.setColorBackground( color( 90 ) );
   blobAlphaText.setAutoClear( false );
   blobAlphaText.submit();
   
-  //centroid colors  
-  controlP5.Textfield centrStrokeText = controlP5.addTextfield( "centrStrokeText", horizMargin + 240, 550, 65, 20 );
+  //centroid color
+  controlP5.Textfield centrStrokeText = controlP5.addTextfield( "centrStrokeText", horizMargin + 225, 550, colorBoxLength, boxHeight );
   centrStrokeText.setCaptionLabel( "" );
   centrStrokeText.setColorBackground( color( 90 ) );
   centrStrokeText.setAutoClear( false );
   
-  controlP5.Textfield centrAlphaText = controlP5.addTextfield( "centrAlphaText", horizMargin + 240, 575, 65, 20 );
+  controlP5.Textfield centrAlphaText = controlP5.addTextfield( "centrAlphaText", horizMargin + 225, 575, colorBoxLength, boxHeight );
   centrAlphaText.setValue( "255" );
   centrAlphaText.setCaptionLabel( "" );
   centrAlphaText.setColorBackground( color( 90 ) );
   centrAlphaText.setAutoClear( false );
   centrAlphaText.submit();
-  
+
   //text color
-  controlP5.Textfield textColorText = controlP5.addTextfield( "textColorText", horizMargin + 240, 620, 65, 20 );
+  controlP5.Textfield textColorText = controlP5.addTextfield( "textColorText", horizMargin + 225, 625, colorBoxLength, boxHeight );
   textColorText.setCaptionLabel( "" );
   textColorText.setColorBackground( color( 90 ) );
   textColorText.setAutoClear( false );
   
-  controlP5.Textfield textSizeText = controlP5.addTextfield( "textSizeText", horizMargin + 240, 645, 65, 20 );
-  textSizeText.setCaptionLabel( "" );
-  textSizeText.setColorBackground( color( 90 ) );
-  textSizeText.setAutoClear( false );
+  
+  //SIZE SETTINGS
+  //overall stroke
+  controlP5.Textfield strokeSize = controlP5.addTextfield( "strokeSize", horizMargin + 225, 685, colorBoxLength, boxHeight );
+  strokeSize.setValue( 2 );
+  strokeSize.setCaptionLabel( "" );
+  strokeSize.setColorBackground( color( 90 ) );
+  strokeSize.setAutoClear( false );
+  strokeSize.submit();
+  
+  //centroid
+  controlP5.Textfield centrSize = controlP5.addTextfield( "centrSize", horizMargin + 225, 710, colorBoxLength, boxHeight );
+  centrSize.setValue( 10 );
+  centrSize.setCaptionLabel( "" );
+  centrSize.setColorBackground( color( 90 ) );
+  centrSize.setAutoClear( false );
+  centrSize.submit();
+  
+  //text
+  controlP5.Textfield centrTextSize = controlP5.addTextfield( "centrTextSize", horizMargin + 225, 735, colorBoxLength, boxHeight );
+  centrTextSize.setValue( 10 );
+  centrTextSize.setCaptionLabel( "" );
+  centrTextSize.setColorBackground( color( 90 ) );
+  centrTextSize.setAutoClear( false );
+  centrTextSize.submit();
 }
 
 
@@ -413,26 +443,29 @@ void drawText()
   text( "IMAGE ADJUSTMENT", horizMargin, horizMargin * 2 );
   text( "BLOB DETECTION SETTINGS", horizMargin, horizMargin * 9 );
   text( "COLOR SETTINGS", horizMargin, 425 );
+  text( "SIZE SETTINGS", horizMargin, 695 );
   fill( valueText, 155 );
   text( "(r,g,b)", horizMargin + 150, 425 );
   text( "Blob", horizMargin, 460 );
   text( "Centr.", horizMargin, 560 );
-  text( "Text", horizMargin, 630 );
+  text( "Text", horizMargin, 635 );
   fill( 255 );
   textSize( smallText );
-  text( "Fill",   205, 460 );
-  text( "Stroke", 205, 485 );
-  text( "Alpha",  205, 510 );
-  text( "Stroke", 205, 565 );
-  text( "Alpha",  205, 590 );
-  text( "Fill",   205, 635 );
-  text( "Size",   206, 662 );
+  text( "Fill",   190, 460 );
+  text( "Stroke", 190, 485 );
+  text( "Alpha",  190, 510 );
+  text( "Stroke", 190, 565 );
+  text( "Alpha",  190, 590 );
+  text( "Fill",   190, 640 );
+  text( "Stroke", 190, 700 );
+  text( "Centr",  190, 725 );
+  text( "Text",   190, 750 );
 }
 
 void drawColorBoxes()
 {
   //blob color
-  strokeWeight( 2 );
+  strokeWeight( strokeSize );
   stroke( blobStroke );
   fill( blobFill, blobAlpha );
   rect( 95, 445, 75, 75 ); 
@@ -441,6 +474,11 @@ void drawColorBoxes()
   stroke( centrStroke, centrAlpha );
   line( 130, 545, 130, 595 );
   line( 105, 570, 155, 570 );
+  
+  //text sample
+  fill( textColor );
+  textSize( largeText * 1.5 );
+  text( "1234.0", 89, 645 );
 }
 
 void resetImage()
@@ -592,6 +630,7 @@ void centrAlphaText( String theValue )
   centrAlpha = num; 
 }
 
+
 void textColorText( String theValue )
 {
   if( theValue.contains( "," ) )
@@ -605,7 +644,19 @@ void textColorText( String theValue )
   } 
 }
 
-void textSizeText( String theValue )
+void centrSize( String theValue )
+{
+  int num = int( theValue );
+  centrSize = num; 
+}
+
+void strokeSize( String theValue )
+{
+  int num = int( theValue );
+  strokeSize = num; 
+}
+
+void centrTextSize( String theValue )
 {
   int num = int( theValue );
   centrTextSize = num; 
