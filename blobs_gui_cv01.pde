@@ -309,9 +309,9 @@ void initGui()
   c.setActive      ( color( 155, 0, 0 ) );
 
   // Viewer Window
-  controlP5.Button setPath = controlP5.addButton( "PATH", 0, windowLeft, height - 30, 75, 20 );
-  setPath.setCaptionLabel( " <PATH>" );
-  setPath.setColor( c );
+//  controlP5.Button setPath = controlP5.addButton( "PATH", 0, windowLeft, height - 30, 75, 20 );
+//  setPath.setCaptionLabel( " <PATH>" );
+//  setPath.setColor( c );
 
   controlP5.Slider scrubber = controlP5.addSlider( "scrubber", 1, files.length-1, 0, windowLeft, windowHeight - 15, windowWidth, 15 );
   scrubber.setMin( 1 );
@@ -536,7 +536,7 @@ void drawText()
   fill( valueText );
   String[] pathStrings = path.split("/");
   String relativePath  = ".../" + pathStrings[ pathStrings.length-2 ] + "/" + pathStrings[ pathStrings.length - 1 ];
-  text( relativePath, windowLeft + 90, height - 12 ); 
+  text( relativePath, width - 275, height - 12 ); 
   text( "IMAGE ADJUSTMENT", horizMargin, horizMargin * 2 );
   text( "BLOB DETECTION SETTINGS", horizMargin, horizMargin * 9 );
   text( "COLOR SETTINGS", horizMargin, 425 );
