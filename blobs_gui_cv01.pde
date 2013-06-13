@@ -52,6 +52,7 @@ boolean findHoles;
 color blobFill, blobStroke, blobStrokeWeight, blobAlpha;
 color centrStroke, centrAlpha;
 color textColor;
+int centrTextSize;
 
 void setup() 
 {  
@@ -87,6 +88,7 @@ void setup()
   blobStroke =  color( #0028FF );
   centrStroke = color( #FF6E32 );
   blobStrokeWeight = 2;
+  centrTextSize = 10;
 }
 
 
@@ -175,7 +177,8 @@ void detectBlobsSingleImage( String filename )
 
     // text value
     blobFrame.noStroke();
-    blobFrame.fill( textColor );
+    blobFrame.fill( textColor, centrAlpha );
+    blobFrame.textSize( centrTextSize );
     blobFrame.text( circumference, centroid.x+5, centroid.y+15 );
   }
   blobFrame.resize( imageSize, 0 );
@@ -374,6 +377,17 @@ void initGui()
   centrAlphaText.setColorBackground( color( 90 ) );
   centrAlphaText.setAutoClear( false );
   centrAlphaText.submit();
+  
+  //text color
+  controlP5.Textfield textColorText = controlP5.addTextfield( "textColorText", horizMargin + 240, 620, 65, 20 );
+  textColorText.setCaptionLabel( "" );
+  textColorText.setColorBackground( color( 90 ) );
+  textColorText.setAutoClear( false );
+  
+  controlP5.Textfield textSizeText = controlP5.addTextfield( "textSizeText", horizMargin + 240, 645, 65, 20 );
+  textSizeText.setCaptionLabel( "" );
+  textSizeText.setColorBackground( color( 90 ) );
+  textSizeText.setAutoClear( false );
 }
 
 
@@ -403,6 +417,7 @@ void drawText()
   text( "(r,g,b)", horizMargin + 150, 425 );
   text( "Blob", horizMargin, 460 );
   text( "Centr.", horizMargin, 560 );
+  text( "Text", horizMargin, 630 );
   fill( 255 );
   textSize( smallText );
   text( "Fill",   205, 460 );
@@ -410,6 +425,8 @@ void drawText()
   text( "Alpha",  205, 510 );
   text( "Stroke", 205, 565 );
   text( "Alpha",  205, 590 );
+  text( "Fill",   205, 635 );
+  text( "Size",   206, 662 );
 }
 
 void drawColorBoxes()
@@ -573,6 +590,25 @@ void centrAlphaText( String theValue )
 {
   int num = int( theValue );
   centrAlpha = num; 
+}
+
+void textColorText( String theValue )
+{
+  if( theValue.contains( "," ) )
+  {
+    String[] colorString = split( theValue, "," );
+    textColor =  color( int( colorString[0] ), int( colorString[1] ), int( colorString[2] ) );
+  } 
+  else 
+  {
+    textColor = color( int( theValue ) ); 
+  } 
+}
+
+void textSizeText( String theValue )
+{
+  int num = int( theValue );
+  centrTextSize = num; 
 }
 
 public void stop() {
